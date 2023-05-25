@@ -1,8 +1,7 @@
 /*
-  CRONOMETRAJE F2C TEAM RACING, CAJA MESA CONTROL
-  F2C TEAM RACING TIMING, CHAIRMAN CONTROL BOX
-  Código v2.0 actualizado 22may2023
-  Code v2.0 updated may222023
+  CRONOMETRAJE F2C TEAM RACING / F2C TEAM RACING TIMING
+  CAJA MESA CONTROL módulo 2.4 gHz / CONTROL BOX 2.4 gHz module
+  v2.1 actualizado 25may2023 / updated may252023
 */
 
 #include "config.h"
@@ -13,7 +12,10 @@ void setup() {
     init_pins();
     init_radio();
     verify_laps_selector_pin();
-    Serial.println("CAJA MESA CONTROL INICIALIZADA");
+
+    #ifdef DEBUG
+    Serial.println("CAJA MESA CONTROL INICIALIZADA / CONTROL BOX STARTED");
+    #endif
 }
 
 void loop() {

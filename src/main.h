@@ -7,6 +7,7 @@ void init_pins() {
     // digitalWrite(INFO_LED_PIN, LOW);
 
     // Config pines para objetos de control de pulsadores, todos con PULLUP habilitado
+    // Pins config for pushbuttons control objects, all with enabled PULLUP
     btn_rtfp.attach(RED_TEAM_FAULT_PLUS, INPUT_PULLUP);
     btn_rtfm.attach(RED_TEAM_FAULT_MINUS, INPUT_PULLUP);
     btn_gtfp.attach(GREEN_TEAM_FAULT_PLUS, INPUT_PULLUP);
@@ -18,7 +19,7 @@ void init_pins() {
     btn_se.attach(START_ENGINES_PIN, INPUT_PULLUP);
     btn_ls.attach(LAPS_SELECTOR_PIN, INPUT_PULLUP);
 
-    // Intervalo de lectura para debouncing
+    // Intervalo de lectura para debouncing / debouncing interval
     btn_rtfp.interval(BUTTONS_READING_FREQ);
     btn_rtfm.interval(BUTTONS_READING_FREQ);
     btn_gtfp.interval(BUTTONS_READING_FREQ);
@@ -42,7 +43,9 @@ void init_pins() {
 
 void init_radio() {
     if (!radio.begin()) {
+        #ifdef DEBUG
         Serial.println(F("NRF24: ERROR"));
+        #endif
         // blink_info_led();
     }
 
@@ -51,24 +54,29 @@ void init_radio() {
     radio.setChannel(NRF_CHANNEL);
     radio.setPayloadSize(sizeof(payload));
     radio.openWritingPipe(RADIO_ADDRESS);
-    radio.stopListening(); // Modo TX
+    radio.stopListening(); // Modo TX / TX Mode
     
-    Serial.println(F("NRF24: OK modo TX"));
+    #ifdef DEBUG
+    Serial.println(F("NRF24: OK modo TX / TX mode OK"));
+    #endif
 }
 
 void send_radio_payload() {
-    // Asigna un id al azar
+    // Asigna un id al azar / chooses a random id for the message
     ltoa(random(1, 65535), payload.id, 10);
     // ltoa(millis(), payload.id, 10); // chequear para no exceder los 5 dígitos
     radio.write(&payload, sizeof(payload));
 
+    #ifdef DEBUG
     Serial.println(payload.id);
     Serial.println(payload.data);
     Serial.println();
+    #endif
 }
 
 void verify_laps_selector_pin() {
-    // Chequea simplemente al inicio el estado del selector de vueltas y manda el mensaje
+    // Chequea el estado del selector de vueltas y manda el mensaje
+    // Check status for the laps selector switch and sends the message
     btn_ls.read() ? strcpy(payload.data, "100"): strcpy(payload.data, "200");
     send_radio_payload();
 }
@@ -77,6 +85,7 @@ void loop_buttons() {
     static bool sendRadioCommand = false;
 
     // Rutinas de control de los pulsadores, deben ejecutarse tan seguido como se pueda en el loop
+    // Pushbuttons control routines, must be executed as fast as possible in the main loop
     btn_rtfp.update();
     btn_rtfm.update();
     btn_gtfp.update();
@@ -88,7 +97,7 @@ void loop_buttons() {
     btn_se.update();
     btn_ls.update();
 
-    // Equipo rojo, pulsadores agregado y resta falta
+    // Equipo rojo, pulsadores agregado y resta falta / Red team, add / delete warning pushbuttons
     if (btn_rtfp.fell()) {
         strcpy(payload.data, "RFP");
         sendRadioCommand = true;
@@ -98,7 +107,7 @@ void loop_buttons() {
         sendRadioCommand = true;
     }
 
-    // Equipo verde, pulsadores agregado y resta falta
+    // Equipo verde, pulsadores agregado y resta falta / Green team, add / delete warning pushbuttons
     if (btn_gtfp.fell()) {
         strcpy(payload.data, "GFP");
         sendRadioCommand = true;
@@ -108,7 +117,7 @@ void loop_buttons() {
         sendRadioCommand = true;
     }
 
-    // Equipo amarillo, pulsadores agregado y resta falta
+    // Equipo amarillo, pulsadores agregado y resta falta / Yellow team, add / delete warning pushbuttons
     if (btn_ytfp.fell()) {
         strcpy(payload.data, "YFP");
         sendRadioCommand = true;
@@ -118,30 +127,30 @@ void loop_buttons() {
         sendRadioCommand = true;
     }
 
-    // Pulsador inicio crono carrera
+    // Pulsador inicio crono carrera / Start racing pushbutton
     if (btn_sr.fell()) {
         strcpy(payload.data, "SRS");
         sendRadioCommand = true;
     }
 
-    // Pulsador reseteo crono carrera
+    // Pulsador reseteo crono carrera / Reset racing pushbutton
     if (btn_rr.fell()) {
         strcpy(payload.data, "RRS");
         sendRadioCommand = true;
     }
 
-    // Pulsador arrancar motores
+    // Pulsador arrancar motores / Start engines pushbutton
     if (btn_se.fell()) {
         strcpy(payload.data, "SES");
         sendRadioCommand = true;
     }
 
-    // Pulsador elección de vueltas
+    // Switch elección de vueltas / Laps selector switch
     if (btn_ls.changed()) {
         verify_laps_selector_pin();
     }
 
-    // Envío mensaje radio
+    // Envío mensaje radio / Radio message delivery
     if (sendRadioCommand) {
         send_radio_payload();
         sendRadioCommand = false;
