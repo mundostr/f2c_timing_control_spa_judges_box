@@ -16,8 +16,8 @@ https://lastminuteengineers.com/nrf24l01-arduino-wireless-communication/
 #define GREEN_TEAM_FAULT_MINUS 7
 #define YELLOW_TEAM_FAULT_PLUS 8
 #define YELLOW_TEAM_FAULT_MINUS 9
-#define START_RACE_PIN 16
-#define RESET_RACE_PIN 17
+#define RESET_RACE_PIN 16
+#define START_RACE_PIN 17
 #define START_ENGINES_PIN 4
 #define LAPS_SELECTOR_PIN 2
 #define NRF_CE_PIN 15

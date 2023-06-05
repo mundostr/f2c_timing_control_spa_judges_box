@@ -1,7 +1,7 @@
 /*
   CRONOMETRAJE F2C TEAM RACING / F2C TEAM RACING TIMING
   CAJA MESA CONTROL módulo 2.4 gHz / CONTROL BOX 2.4 gHz module
-  v2.1 actualizado 25may2023 / updated may252023
+  v2.1 actualizado 04jun2023 / updated jun042023
 */
 
 #include "config.h"
