@@ -1,14 +1,17 @@
 /*
   CRONOMETRAJE F2C TEAM RACING / F2C TEAM RACING TIMING
   CAJA MESA CONTROL módulo 2.4 gHz / CONTROL BOX 2.4 gHz module
-  v2.1 actualizado 04jun2023 / updated jun042023
+  v3.0 actualizado 08ago2023 / updated ago082023
 */
 
 #include "config.h"
 #include "main.h"
 
 void setup() {
+    #ifdef DEBUG
     Serial.begin(SERIAL_MONITOR_BAUDS);
+    #endif
+
     init_pins();
     init_radio();
     verify_laps_selector_pin();

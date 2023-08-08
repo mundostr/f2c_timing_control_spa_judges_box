@@ -53,7 +53,7 @@ void init_radio() {
     radio.setDataRate(RF24_250KBPS); //(RF24_250KBPS|RF24_1MBPS|RF24_2MBPS)
     radio.setChannel(NRF_CHANNEL);
     radio.setPayloadSize(sizeof(payload));
-    radio.openWritingPipe(RADIO_ADDRESS);
+    radio.openWritingPipe(RADIO_ADDRESSES[0]);
     radio.stopListening(); // Modo TX / TX Mode
     
     #ifdef DEBUG
@@ -61,27 +61,40 @@ void init_radio() {
     #endif
 }
 
-void send_radio_payload() {
-    // Asigna un id al azar / chooses a random id for the message
-    ltoa(random(1, 65535), payload.id, 10);
-    // ltoa(millis(), payload.id, 10); // chequear para no exceder los 5 dígitos
-    radio.write(&payload, sizeof(payload));
+void send_radio_payload(int node) {
+    if (node == -1) {
+        for (int i = 0; i < 3; i++) {
+            radio.openWritingPipe(RADIO_ADDRESSES[i]);
+            radio.stopListening();
+            // Asigna un id al azar / chooses a random id for the message
+            ltoa(random(1, 65535), payload.id, 10);
+            radio.write(&payload, sizeof(payload));
+            delayMicroseconds(500);
+        }
+    } else {
+        radio.openWritingPipe(RADIO_ADDRESSES[node]);
+        radio.stopListening();
+        // Asigna un id al azar / chooses a random id for the message
+        ltoa(random(1, 65535), payload.id, 10);
+        radio.write(&payload, sizeof(payload));
 
-    #ifdef DEBUG
-    Serial.println(payload.id);
-    Serial.println(payload.data);
-    Serial.println();
-    #endif
+        /* #ifdef DEBUG
+        Serial.println(payload.id);
+        Serial.println(payload.data);
+        Serial.println();
+        #endif */
+    }
 }
 
 void verify_laps_selector_pin() {
     // Chequea el estado del selector de vueltas y manda el mensaje
     // Check status for the laps selector switch and sends the message
     btn_ls.read() ? strcpy(payload.data, "100"): strcpy(payload.data, "200");
-    send_radio_payload();
+    send_radio_payload(-1);
 }
 
 void loop_buttons() {
+    int destination_node = -1;
     static bool sendRadioCommand = false;
 
     // Rutinas de control de los pulsadores, deben ejecutarse tan seguido como se pueda en el loop
@@ -100,30 +113,36 @@ void loop_buttons() {
     // Equipo rojo, pulsadores agregado y resta falta / Red team, add / delete warning pushbuttons
     if (btn_rtfp.fell()) {
         strcpy(payload.data, "RFP");
+        destination_node = 0;
         sendRadioCommand = true;
     }
     if (btn_rtfm.fell()) {
         strcpy(payload.data, "RFM");
+        destination_node = 0;
         sendRadioCommand = true;
     }
 
     // Equipo verde, pulsadores agregado y resta falta / Green team, add / delete warning pushbuttons
     if (btn_gtfp.fell()) {
         strcpy(payload.data, "GFP");
+        destination_node = 1;
         sendRadioCommand = true;
     }
     if (btn_gtfm.fell()) {
         strcpy(payload.data, "GFM");
+        destination_node = 1;
         sendRadioCommand = true;
     }
 
     // Equipo amarillo, pulsadores agregado y resta falta / Yellow team, add / delete warning pushbuttons
     if (btn_ytfp.fell()) {
         strcpy(payload.data, "YFP");
+        destination_node = 2;
         sendRadioCommand = true;
     }
     if (btn_ytfm.fell()) {
         strcpy(payload.data, "YFM");
+        destination_node = 2;
         sendRadioCommand = true;
     }
 
@@ -152,7 +171,7 @@ void loop_buttons() {
 
     // Envío mensaje radio / Radio message delivery
     if (sendRadioCommand) {
-        send_radio_payload();
+        send_radio_payload(destination_node);
         sendRadioCommand = false;
     }
 }

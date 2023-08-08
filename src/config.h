@@ -25,7 +25,7 @@ https://lastminuteengineers.com/nrf24l01-arduino-wireless-communication/
 // #define INFO_LED_PIN 18
 
 // Constantes generales / general constants
-#define DEBUG // Si se define se habilita la consola serial / If defined, serial console is enabled
+// #define DEBUG // Si se define se habilita la consola serial / If defined, serial console is enabled
 #define SERIAL_MONITOR_BAUDS 115200
 #define RADIO_COMMAND_LENGTH 3
 #define BUTTONS_READING_FREQ 30
@@ -35,8 +35,8 @@ https://lastminuteengineers.com/nrf24l01-arduino-wireless-communication/
 RF24 radio(NRF_CE_PIN, NRF_CSN_PIN);
 Bounce btn_rtfp, btn_rtfm, btn_gtfp, btn_gtfm, btn_ytfp, btn_ytfm, btn_sr, btn_rr, btn_se, btn_ls = Bounce();
 
-// Dirección de comunicación / NRF comm address
-const byte RADIO_ADDRESS[6] = "00001";
+// Direcciones de comunicación / NRF comm addresses
+const byte RADIO_ADDRESSES[3][6] = {"00001", "00002", "00003"};
 
 // Payload para manejo de datos / Payload for data handling
 struct Payload {
