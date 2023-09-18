@@ -34,26 +34,19 @@ void init_pins() {
     randomSeed(analogRead(4));
 }
 
-// void blink_info_led() {
-//     for(;;) {
-//         digitalWrite(INFO_LED_PIN, !digitalRead(INFO_LED_PIN));
-//         delay(250);
-//     }
-// }
-
 void init_radio() {
     if (!radio.begin()) {
         #ifdef DEBUG
         Serial.println(F("NRF24: ERROR"));
         #endif
-        // blink_info_led();
+        for(;;);
     }
 
     radio.setPALevel(RF24_PA_MAX); //(RF24_PA_MIN|RF24_PA_LOW|RF24_PA_HIGH|RF24_PA_MAX)
     radio.setDataRate(RF24_250KBPS); //(RF24_250KBPS|RF24_1MBPS|RF24_2MBPS)
     radio.setChannel(NRF_CHANNEL);
     radio.setPayloadSize(sizeof(payload));
-    radio.openWritingPipe(RADIO_ADDRESS);
+    radio.openWritingPipe(RADIO_ADDRESSES[0]);
     radio.stopListening(); // Modo TX / TX Mode
     
     #ifdef DEBUG
@@ -61,29 +54,73 @@ void init_radio() {
     #endif
 }
 
-void send_radio_payload() {
-    // Asigna un id al azar / chooses a random id for the message
-    ltoa(random(1, 65535), payload.id, 10);
-    // ltoa(millis(), payload.id, 10); // chequear para no exceder los 5 dígitos
-    radio.write(&payload, sizeof(payload));
+void init_player() {
+    #ifdef AUDIO_ENABLED
+    dfSerial.begin(9600);
 
+    if (!dfPlayer.begin(dfSerial)) {
+        #ifdef DEBUG
+        Serial.println(F("MP3: ERROR"));
+        #endif
+        while(true){ delay(0); }
+    }
+    dfPlayer.volume(AUDIO_VOLUME);
+    
     #ifdef DEBUG
-    Serial.println(payload.id);
-    Serial.println(payload.data);
-    Serial.println();
+    Serial.println(F("MP3: OK!"));
+    #endif
     #endif
 }
 
-void verify_laps_selector_pin() {
+void send_radio_payload(int node) {
+    if (node == -1) {
+        for (int i = 0; i < 3; i++) {
+            radio.openWritingPipe(RADIO_ADDRESSES[i]);
+            radio.stopListening();
+            // Asigna un id al azar / chooses a random id for the message
+            ltoa(random(1, 65535), payload.id, 10);
+            radio.write(&payload, sizeof(payload));
+            delayMicroseconds(500);
+        }
+    } else {
+        radio.openWritingPipe(RADIO_ADDRESSES[node]);
+        radio.stopListening();
+        // Asigna un id al azar / chooses a random id for the message
+        ltoa(random(1, 65535), payload.id, 10);
+        radio.write(&payload, sizeof(payload));
+    }
+        
+    #ifdef DEBUG
+    Serial.println(payload.data);
+    #endif
+}
+
+void verify_laps_selector_pin(boolean onBoot = false) {
     // Chequea el estado del selector de vueltas y manda el mensaje
+    // Se aprovecha también para cambiar entre audio español o inglés al iniciar
     // Check status for the laps selector switch and sends the message
-    btn_ls.read() ? strcpy(payload.data, "100"): strcpy(payload.data, "200");
-    send_radio_payload();
+    // Is also used to switch between spanish and english audio when booting
+    if (btn_ls.read()) {
+        strcpy(payload.data, "100");
+        
+        #ifdef AUDIO_ENABLED
+        if (onBoot) { current_audio_ptr = 1; }
+        #endif
+    } else {
+        strcpy(payload.data, "200");
+        
+        #ifdef AUDIO_ENABLED
+        if (onBoot) { current_audio_ptr = 2; }
+        #endif
+    }
+
+    send_radio_payload(-1);
 }
 
 void loop_buttons() {
+    int destination_node = -1;
     static bool sendRadioCommand = false;
-
+    
     // Rutinas de control de los pulsadores, deben ejecutarse tan seguido como se pueda en el loop
     // Pushbuttons control routines, must be executed as fast as possible in the main loop
     btn_rtfp.update();
@@ -100,49 +137,68 @@ void loop_buttons() {
     // Equipo rojo, pulsadores agregado y resta falta / Red team, add / delete warning pushbuttons
     if (btn_rtfp.fell()) {
         strcpy(payload.data, "RFP");
+        destination_node = 0;
         sendRadioCommand = true;
     }
     if (btn_rtfm.fell()) {
         strcpy(payload.data, "RFM");
+        destination_node = 0;
         sendRadioCommand = true;
     }
 
     // Equipo verde, pulsadores agregado y resta falta / Green team, add / delete warning pushbuttons
     if (btn_gtfp.fell()) {
         strcpy(payload.data, "GFP");
+        destination_node = 1;
         sendRadioCommand = true;
     }
     if (btn_gtfm.fell()) {
         strcpy(payload.data, "GFM");
+        destination_node = 1;
         sendRadioCommand = true;
     }
 
     // Equipo amarillo, pulsadores agregado y resta falta / Yellow team, add / delete warning pushbuttons
     if (btn_ytfp.fell()) {
         strcpy(payload.data, "YFP");
+        destination_node = 2;
         sendRadioCommand = true;
     }
     if (btn_ytfm.fell()) {
         strcpy(payload.data, "YFM");
+        destination_node = 2;
         sendRadioCommand = true;
     }
 
     // Pulsador inicio crono carrera / Start racing pushbutton
     if (btn_sr.fell()) {
+        dfPlayer.stop();
         strcpy(payload.data, "SRS");
         sendRadioCommand = true;
     }
 
     // Pulsador reseteo crono carrera / Reset racing pushbutton
     if (btn_rr.fell()) {
+        dfPlayer.stop();
         strcpy(payload.data, "RRS");
         sendRadioCommand = true;
     }
 
     // Pulsador arrancar motores / Start engines pushbutton
     if (btn_se.fell()) {
+        // Se reproduce el audio de inicio si está habilitado / Start engines audio is played if enabled
+        #ifdef AUDIO_ENABLED
+        dfPlayer.play(current_audio_ptr);
+        start_signal_just_received = true;
+        start_delay_timer = millis();
+
+        #ifdef DEBUG
+        Serial.println("START");
+        #endif
+        #else
         strcpy(payload.data, "SES");
         sendRadioCommand = true;
+        #endif
     }
 
     // Switch elección de vueltas / Laps selector switch
@@ -150,9 +206,18 @@ void loop_buttons() {
         verify_laps_selector_pin();
     }
 
+    #ifdef AUDIO_ENABLED
+    if (start_signal_just_received && millis() - start_delay_timer >= START_SIGNAL_DELAY) {
+        start_signal_just_received = false;
+        start_delay_timer = millis();
+        strcpy(payload.data, "SES");
+        sendRadioCommand = true;
+    }
+    #endif
+    
     // Envío mensaje radio / Radio message delivery
     if (sendRadioCommand) {
-        send_radio_payload();
+        send_radio_payload(destination_node);
         sendRadioCommand = false;
     }
 }
