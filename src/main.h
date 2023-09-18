@@ -192,9 +192,6 @@ void loop_buttons() {
         start_signal_just_received = true;
         start_delay_timer = millis();
 
-        #ifdef DEBUG
-        Serial.println("START");
-        #endif
         #else
         strcpy(payload.data, "SES");
         sendRadioCommand = true;
@@ -211,6 +208,11 @@ void loop_buttons() {
         start_signal_just_received = false;
         start_delay_timer = millis();
         strcpy(payload.data, "SES");
+        sendRadioCommand = true;
+    }
+    
+    if (payload.data == "SES" && dfPlayer.readType() == DFPlayerPlayFinished) {
+        strcpy(payload.data, "SRS");
         sendRadioCommand = true;
     }
     #endif
