@@ -31,6 +31,7 @@ https://lastminuteengineers.com/nrf24l01-arduino-wireless-communication/
 #define NRF_CSN_PIN 10
 #define DF_TX_PIN 19
 #define DF_RX_PIN 18
+#define DF_BUSY_PIN 14
 
 // Constantes generales / general constants
 #define SERIAL_MONITOR_BAUDS 115200
@@ -63,5 +64,7 @@ Payload payload;
 #ifdef AUDIO_ENABLED
 int current_audio_ptr = 1;
 uint32_t start_delay_timer = 0;
+uint32_t player_status_timer = 0;
 bool start_signal_just_received = false;
+bool check_player_status = false;
 #endif

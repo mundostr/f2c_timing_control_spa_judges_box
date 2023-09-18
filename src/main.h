@@ -3,9 +3,8 @@
 #include "config.h"
 
 void init_pins() {
-    // pinMode(INFO_LED_PIN, OUTPUT);
-    // digitalWrite(INFO_LED_PIN, LOW);
-
+    pinMode(DF_BUSY_PIN, INPUT_PULLUP);
+    
     // Config pines para objetos de control de pulsadores, todos con PULLUP habilitado
     // Pins config for pushbuttons control objects, all with enabled PULLUP
     btn_rtfp.attach(RED_TEAM_FAULT_PLUS, INPUT_PULLUP);
@@ -62,7 +61,7 @@ void init_player() {
         #ifdef DEBUG
         Serial.println(F("MP3: ERROR"));
         #endif
-        while(true){ delay(0); }
+        for(;;);
     }
     dfPlayer.volume(AUDIO_VOLUME);
     
@@ -207,13 +206,20 @@ void loop_buttons() {
     if (start_signal_just_received && millis() - start_delay_timer >= START_SIGNAL_DELAY) {
         start_signal_just_received = false;
         start_delay_timer = millis();
+        player_status_timer = millis();
         strcpy(payload.data, "SES");
         sendRadioCommand = true;
+        check_player_status = true;
     }
-    
-    if (payload.data == "SES" && dfPlayer.readType() == DFPlayerPlayFinished) {
-        strcpy(payload.data, "SRS");
-        sendRadioCommand = true;
+
+    if (check_player_status && millis() - player_status_timer >= 10) {
+        if (digitalRead(DF_BUSY_PIN)) {
+            strcpy(payload.data, "SRS");
+            sendRadioCommand = true;
+            check_player_status = false;
+        }
+
+        player_status_timer = millis();
     }
     #endif
     
