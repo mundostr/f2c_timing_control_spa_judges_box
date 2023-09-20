@@ -68,3 +68,6 @@ uint32_t player_status_timer = 0;
 bool start_signal_just_received = false;
 bool check_player_status = false;
 #endif
+
+enum Modes { CONFIG, NORMAL };
+Modes mode = NORMAL;

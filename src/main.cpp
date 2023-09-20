@@ -10,6 +10,8 @@
 void setup() {
     Serial.begin(SERIAL_MONITOR_BAUDS);
     init_pins();
+    verify_config_mode();
+    
     init_radio();
     #ifdef AUDIO_ENABLED
     init_player();

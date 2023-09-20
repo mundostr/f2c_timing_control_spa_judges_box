@@ -116,6 +116,10 @@ void verify_laps_selector_pin(boolean onBoot = false) {
     send_radio_payload(-1);
 }
 
+void verify_config_mode() {
+    mode = digitalRead(START_RACE_PIN) ? NORMAL: CONFIG;
+}
+
 void loop_buttons() {
     int destination_node = -1;
     static bool sendRadioCommand = false;
@@ -135,13 +139,21 @@ void loop_buttons() {
 
     // Equipo rojo, pulsadores agregado y resta falta / Red team, add / delete warning pushbuttons
     if (btn_rtfp.fell()) {
-        strcpy(payload.data, "RFP");
-        destination_node = 0;
+        if (mode == NORMAL) {
+            strcpy(payload.data, "RFP");
+            destination_node = 0;
+        } else {
+            strcpy(payload.data, "BRP");
+        }
         sendRadioCommand = true;
     }
     if (btn_rtfm.fell()) {
-        strcpy(payload.data, "RFM");
-        destination_node = 0;
+        if (mode == NORMAL) {
+            strcpy(payload.data, "RFM");
+            destination_node = 0;
+        } else {
+            strcpy(payload.data, "BRM");
+        }
         sendRadioCommand = true;
     }
 
