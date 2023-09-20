@@ -6,10 +6,9 @@ Código caja mesa control, permite el envío inalámbrico de comandos a los pane
 Code for judges control box, allows to send wireless commands to team panels for timing, laps and warnings. Also gives audio output for starting sequence playing.
 
 POR HACER:
-- Arranque automático de crono luego de pitido final warmup.
 - Cambio de brillo en paneles sin cambio de código.
 - Modificación de código OTA.
 - Integración módulos Heltec.
 
 AGREGADOS RECIENTES:
-- 
+- Arranque automático de crono luego de pitido final warmup.

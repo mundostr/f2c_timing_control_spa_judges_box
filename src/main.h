@@ -171,14 +171,18 @@ void loop_buttons() {
 
     // Pulsador inicio crono carrera / Start racing pushbutton
     if (btn_sr.fell()) {
+        #ifdef AUDIO_ENABLED
         dfPlayer.stop();
+        #endif
         strcpy(payload.data, "SRS");
         sendRadioCommand = true;
     }
 
     // Pulsador reseteo crono carrera / Reset racing pushbutton
     if (btn_rr.fell()) {
+        #ifdef AUDIO_ENABLED
         dfPlayer.stop();
+        #endif
         strcpy(payload.data, "RRS");
         sendRadioCommand = true;
     }

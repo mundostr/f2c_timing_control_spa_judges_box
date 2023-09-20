@@ -5,7 +5,7 @@ https://lastminuteengineers.com/nrf24l01-arduino-wireless-communication/
 #pragma once
 
 #define DEBUG // Si se define se habilita la consola serial / If defined, serial console is enabled
-#define AUDIO_ENABLED // Si se define, se activa el uso de audio / If defined, audio module is enabled
+// #define AUDIO_ENABLED // Si se define, se activa el uso de audio / If defined, audio module is enabled
 
 #include <Arduino.h>
 #include <Bounce2.h>
