@@ -228,7 +228,7 @@ void loop_buttons() {
         check_player_status = true;
     }
 
-    if (check_player_status && millis() - player_status_timer >= 10) {
+    /* if (check_player_status && millis() - player_status_timer >= 10) {
         if (digitalRead(DF_BUSY_PIN)) {
             strcpy(payload.data, "SRS");
             sendRadioCommand = true;
@@ -236,7 +236,7 @@ void loop_buttons() {
         }
 
         player_status_timer = millis();
-    }
+    } */
     #endif
     
     // Envío mensaje radio / Radio message delivery
